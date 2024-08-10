@@ -1,59 +1,100 @@
-type AlphaMassUpdate @entity(immutable: true) {
-  id: Bytes!
-  tokenId: BigInt! # uint256
-  alphaMass: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+"""
+Color of NFT from least rare to rarest
+"""
+enum Color {
+  WHITE #tier/class - 1
+  YELLOW #tier/class - 2
+  BLUE #tier/class - 3
+  RED #tier/class - 4
+  BLACK #tier/class - 4
 }
 
-type Approval @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes! # address
-  approved: Bytes! # address
-  tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+"""
+Tier of NFT from least rare to rarest that corresponds to Color.
+"""
+enum Tier {
+  ONE
+  TWO
+  THREE
+  FOUR
 }
 
-type ApprovalForAll @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes! # address
-  operator: Bytes! # address
-  approved: Boolean! # bool
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+"""
+An account of users holding an NFT within 'merge.' collection.
+"""
+type User @entity {
+  "Unique address of a merge NFT owner"
+  id: ID!
+  "Details about NFTs being held by this User"
+  mergeNFTs: [NFT!] @derivedFrom(field: "owner")
+  "Whether this User can carry more than one merge NFT"
+  whitelist: Boolean! #These are central marketplaces typically like Nifty Gateway
 }
 
-type ConsecutiveTransfer @entity(immutable: true) {
-  id: Bytes!
-  fromTokenId: BigInt! # uint256
-  toTokenId: BigInt! # uint256
-  fromAddress: Bytes! # address
-  toAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+"""
+Individual NFTs within this collection.
+"""
+type NFT @entity {
+  "Unique tokenID"
+  id: ID!
+  "Current owner unless merged where it would be address(0)"
+  owner: User!
+  "NFT-Specific value representing tier and mass"
+  value: BigInt!
+  "Size of mass for a specific NFT"
+  mass: BigInt!
+  "Color of mass NFT; BLACK is Alpha"
+  color: Color!
+  "Rarity for mass NFTs; higher numbers are highest rarity"
+  tier: Tier!
+  "Amount of times this tokenID has absorbed other NFTs"
+  mergeCount: Int!
+  "Whether the NFT is alpha or not"
+  isAlpha: Boolean
+  "All owners of this nft - past and present"
+  allOwners: [User!]!
+  "What tokenId this NFT was merged into"
+  mergedInto: NFT
+  "unix timestamps when merge txs occurred"
+  mergeTimes: [Int!]!
+  "Absorbed NFTs"
+  absorbedNFTs: [NFT!]!
 }
 
-type MassUpdate @entity(immutable: true) {
-  id: Bytes!
-  tokenIdBurned: BigInt! # uint256
-  tokenIdPersist: BigInt! # uint256
-  mass: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type Transfer @entity(immutable: true) {
-  id: Bytes!
-  from: Bytes! # address
-  to: Bytes! # address
-  tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+"""
+The NFT collection, merge., and inherent global details on it.
+"""
+type Collection @entity {
+  "NFT external contract address"
+  id: ID!
+  "Name of NFT collection"
+  name: String!
+  "Total Mass in beginning"
+  originalMass: Int!
+  "ERC token standard used in this collection"
+  tokenStandard: String!
+  "TokenID of alpha mass"
+  alphaTokenId: String!
+  "Initial total minted individual mergeNFTs"
+  initialNFTTotal: Int!
+  "Current amount of individual mergeNFTs existing"
+  currentNFTs: Int!
+  "Number of Merges that have occurred"
+  totalMerges: Int!
+  "Number of archaic non-merge burns"
+  totalBurns: Int!
+  "Total mass in the collection"
+  totalMass: Int!
+  "Total tier-1 (least rare tier) WHITE NFTs"
+  tier1Totals: Int!
+  "Total tier-2 (4th rare tier) YELLOW NFTs"
+  tier2Totals: Int!
+  "Total tier-3 (3rd rare tier) BLUE NFTs"
+  tier3Totals: Int!
+  "Total tier-4 (2nd rare tier) RED NFTs"
+  tier4Totals: Int!
+  "Number of current unique addresses holding these NFTs"
+  totalUniqueOwnerAddresses: Int!
+  "Number of times burn() public function called"
+  burnCallTotal: Int
 }
